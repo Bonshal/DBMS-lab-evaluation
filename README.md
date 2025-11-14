@@ -1,90 +1,80 @@
-# DBMS-lab-evaluation
-DBMS lab evaluation
-
 # Transport Management System (DBMS Project)
 
-A simple and well‑structured MySQL-based **Transport Management System** designed for managing buses, cabs, vans, routes, trips, bookings, passengers, and payments.  
-The project contains **9 interlinked tables**, foreign keys, constraints, and sample data.
+A complete and well-structured **MySQL-based Transport Management System** designed to manage vehicles, routes, staff, trips, bookings, passengers, payments, fare rules, seat allocations, and maintenance records.
+
+This project includes **17 normalized tables**, realistic constraints, foreign keys, sample data, and is fully suitable for DBMS lab evaluation or college mini-projects.
 
 ---
 
 ## 📌 Project Overview
-This system helps manage everyday transport operations, including:
 
-- Vehicle types (Bus, Cab, Van, etc.)
-- Vehicle registration & operator management
-- Route management (origin → destination)
-- Trip scheduling for vehicles
-- Passenger records
-- Booking ticketing system
-- Payment tracking
+This Transport Management System models real-world operations such as:
+
+- Managing vehicle types (Bus, Van, Cab, etc.)
+- Operator/company and staff management  
+- Creating locations and route mapping  
+- Trip scheduling and seat management  
+- Passenger and booking system  
+- Payment processing  
+- Dynamic fare calculation  
+- Vehicle maintenance logging  
+- Trip reviews and cancellation handling  
 
 ---
 
-## 🗂 Database Tables (9 Total)
+## 🗂 Database Tables (17 Total)
 
-1. **vehicle_types** – Stores vehicle categories  
-2. **operators** – Transport companies or owners  
-3. **locations** – Cities, stops, or terminals  
-4. **routes** – Connects two locations with distance & duration  
-5. **vehicles** – Registered vehicles with type & operator  
-6. **trips** – Scheduled travel instances  
-7. **passengers** – Customer information  
-8. **bookings** – Passenger bookings for trips  
-9. **payments** – Payment records for bookings  
+### **Core Entities**
+1. `vehicle_types`  
+2. `operators`  
+3. `staff`  
+4. `locations`  
+5. `routes`  
+6. `vehicles`  
+7. `trips`  
+8. `passengers`  
+
+### **Booking & Ticketing**
+9. `bookings`  
+10. `payments`  
+11. `cancellations`  
+
+### **Seat Management**
+12. `seats`  
+13. `trip_seat_allocations`  
+
+### **Fare & Pricing**
+14. `fares`  
+
+### **Maintenance**
+15. `maintenance_logs`  
+
+### **Feedback**
+16. `reviews`  
+
+### **(Optional)**
+17. `audit_logs` *(if added)*  
 
 ---
 
 ## 🔗 Table Relationships
-- **Vehicles** → linked with **Vehicle Types** and **Operators**  
-- **Routes** → linked with **Locations** (Origin & Destination)  
-- **Trips** → linked with **Routes** and **Vehicles**  
-- **Bookings** → linked with **Trips** and **Passengers**  
-- **Payments** → linked with **Bookings**  
 
-Relationships maintain consistent and valid data.
+- **vehicles** ↔ `vehicle_types`, `operators`, `seats`, `maintenance_logs`
+- **routes** ↔ `locations`
+- **trips** ↔ `routes`, `vehicles`, `staff`
+- **bookings** ↔ `trips`, `passengers`
+- **payments** ↔ `bookings`
+- **trip_seat_allocations** ↔ `seats`, `bookings`
+- **reviews** ↔ `bookings`
+- **cancellations** ↔ `bookings`
 
----
-
-## 🚀 How to Use
-
-1. Create and open a database:
-   ```sql
-   CREATE DATABASE transport_db;
-   USE transport_db;
-   ```
-2. Import the SQL file:
-   ```
-   SOURCE transport_management.sql;
-   ```
-
-Your database will now be ready with all tables and sample data.
+The schema uses foreign keys, cascading rules, ENUMs, and check constraints to ensure integrity.
 
 ---
 
-## 📁 Files Included
-- `transport_management.sql` – Main database schema  
-- `README.md` – Description and setup guide  
+## 🚀 How to Set Up
 
----
-
-## ✨ Optional Enhancements
-Consider adding:
-
-- Route stop sequence table  
-- Stored procedures for booking automation  
-- Triggers for auto-updating seat availability  
-- Views for available trips  
-- Admin login & user roles  
-
----
-
-## 📚 Suitable For
-- End-semester DBMS project  
-- College mini project  
-- SQL & database design practice  
-- Backend development learning  
-
----
-
-
+### 1️⃣ Create a database
+```sql
+CREATE DATABASE transport_db;
+USE transport_db;
