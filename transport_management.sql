@@ -1,13 +1,15 @@
---
--- Transport Management System - schema
--- 9 tables: vehicle_types, operators, locations, routes, vehicles, trips, passengers, bookings, payments
---
-
+DROP TABLE IF EXISTS reviews;
+DROP TABLE IF EXISTS cancellations;
+DROP TABLE IF EXISTS trip_seat_allocations;
+DROP TABLE IF EXISTS seats;
+DROP TABLE IF EXISTS maintenance_logs;
+DROP TABLE IF EXISTS fares;
 DROP TABLE IF EXISTS payments;
 DROP TABLE IF EXISTS bookings;
 DROP TABLE IF EXISTS passengers;
 DROP TABLE IF EXISTS trips;
 DROP TABLE IF EXISTS vehicles;
+DROP TABLE IF EXISTS staff;
 DROP TABLE IF EXISTS routes;
 DROP TABLE IF EXISTS locations;
 DROP TABLE IF EXISTS operators;
@@ -25,6 +27,18 @@ CREATE TABLE operators (
     contact_phone VARCHAR(20),
     contact_email VARCHAR(100),
     address VARCHAR(255)
+);
+
+CREATE TABLE staff (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    operator_id INT NOT NULL,
+    full_name VARCHAR(150) NOT NULL,
+    role ENUM('DRIVER','ATTENDANT','MECHANIC','ADMIN') NOT NULL,
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    license_no VARCHAR(50),
+    status ENUM('ACTIVE','INACTIVE') DEFAULT 'ACTIVE',
+    FOREIGN KEY (operator_id) REFERENCES operators(id) ON DELETE CASCADE
 );
 
 CREATE TABLE locations (
@@ -61,10 +75,31 @@ CREATE TABLE vehicles (
     FOREIGN KEY (operator_id) REFERENCES operators(id) ON DELETE CASCADE
 );
 
+CREATE TABLE maintenance_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    vehicle_id INT NOT NULL,
+    staff_id INT,
+    maintenance_date DATE NOT NULL,
+    description TEXT,
+    cost DECIMAL(10,2) DEFAULT 0,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
+    FOREIGN KEY (staff_id) REFERENCES staff(id) ON DELETE SET NULL
+);
+
+CREATE TABLE seats (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vehicle_id INT NOT NULL,
+    seat_no VARCHAR(10) NOT NULL,
+    seat_type ENUM('REGULAR','WINDOW','AISLE','PREMIUM') DEFAULT 'REGULAR',
+    UNIQUE (vehicle_id, seat_no),
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+);
+
 CREATE TABLE trips (
     id INT AUTO_INCREMENT PRIMARY KEY,
     route_id INT NOT NULL,
     vehicle_id INT NOT NULL,
+    staff_driver_id INT,
     departure_datetime DATETIME NOT NULL,
     arrival_datetime DATETIME,
     base_fare DECIMAL(9,2) NOT NULL CHECK (base_fare >= 0),
@@ -72,7 +107,20 @@ CREATE TABLE trips (
     status ENUM('SCHEDULED','ONGOING','COMPLETED','CANCELLED') DEFAULT 'SCHEDULED',
     UNIQUE (vehicle_id, departure_datetime),
     FOREIGN KEY (route_id) REFERENCES routes(id) ON DELETE RESTRICT,
-    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE RESTRICT
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE RESTRICT,
+    FOREIGN KEY (staff_driver_id) REFERENCES staff(id) ON DELETE SET NULL
+);
+
+CREATE TABLE fares (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    route_id INT NOT NULL,
+    vehicle_type_id INT NOT NULL,
+    base_rate DECIMAL(10,2) NOT NULL,
+    surge_multiplier DECIMAL(4,2) DEFAULT 1.00,
+    effective_from DATE NOT NULL,
+    effective_to DATE,
+    FOREIGN KEY (route_id) REFERENCES routes(id),
+    FOREIGN KEY (vehicle_type_id) REFERENCES vehicle_types(id)
 );
 
 CREATE TABLE passengers (
@@ -96,6 +144,24 @@ CREATE TABLE bookings (
     FOREIGN KEY (passenger_id) REFERENCES passengers(id) ON DELETE CASCADE
 );
 
+CREATE TABLE trip_seat_allocations (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    booking_id BIGINT NOT NULL,
+    seat_id INT NOT NULL,
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+    FOREIGN KEY (seat_id) REFERENCES seats(id) ON DELETE CASCADE,
+    UNIQUE (booking_id, seat_id)
+);
+
+CREATE TABLE cancellations (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    booking_id BIGINT NOT NULL,
+    cancelled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reason VARCHAR(255),
+    refund_amount DECIMAL(10,2) DEFAULT 0,
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
+);
+
 CREATE TABLE payments (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     booking_id BIGINT NOT NULL,
@@ -104,6 +170,15 @@ CREATE TABLE payments (
     payment_method ENUM('CASH','CARD','UPI','WALLET','NETBANKING') DEFAULT 'CARD',
     payment_status ENUM('SUCCESS','FAILED','PENDING') DEFAULT 'SUCCESS',
     transaction_id VARCHAR(100),
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
+);
+
+CREATE TABLE reviews (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    booking_id BIGINT NOT NULL,
+    rating INT CHECK (rating BETWEEN 1 AND 5),
+    comments TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
 );
 
